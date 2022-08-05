@@ -31,10 +31,12 @@
                 }
 
                 const downloadCSV = document.createElement("a");
-                downloadCSV.href = URL.createObjectURL(new Blob(["\uFEFF" + content.join("\n")], { type: "text/csv; charset=UTF-8" }));
+                const url = URL.createObjectURL(new Blob(["\uFEFF" + content.join("\n")], { type: "text/csv; charset=UTF-8" }));
+                downloadCSV.href = url;
                 downloadCSV.setAttribute("download", filename);
                 downloadCSV.click();
                 downloadCSV.remove();
+                URL.revokeObjectURL(url);
             };
             reader.readAsText(this.files[0], "UTF-8");
 
