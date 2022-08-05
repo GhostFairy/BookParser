@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BookParser</title>
+</head>
+
+<body>
+    <input type="file" id="uploadFile" accept=".xml">
+    <script type="text/javascript">
+        document.querySelector("#uploadFile").addEventListener("change", function () {
+            const filename = this.files[0].name.split(".")[0];
+
+            const reader = new FileReader();
+            reader.onload = function () {
+                let sp = new DOMParser().parseFromString(this.result, "text/xml").querySelectorAll("sp");
+                let content = [];
+
+                let column = ["", "speaker", "addressee", "verb", "location", "sp"];
+                content.push(column.join(","));
+
+                for (let i = 0; i < sp.length; i++) {
+                    let row = [i + 1];
+                    for (let j = 1; j < column.length - 1; j++) {
+                        row.push(sp[i].getAttribute(column[j]));
+                    }
+                    row.push("\"" + sp[i].textContent.replace(/(")/g, "\"$1") + "\"");
+                    content.push(row.join(","));
+                }
+
+                const downloadCSV = document.createElement("a");
+                downloadCSV.href = URL.createObjectURL(new Blob(["\uFEFF" + content.join("\n")], { type: "text/csv; charset=UTF-8" }));
+                downloadCSV.setAttribute("download", filename);
+                downloadCSV.click();
+                downloadCSV.remove();
+            };
+            reader.readAsText(this.files[0], "UTF-8");
+
+            this.value = null;
+        });
+    </script>
+</body>
+
+</html>
