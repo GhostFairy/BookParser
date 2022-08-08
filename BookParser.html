@@ -11,7 +11,7 @@
     <input type="file" id="uploadFile" accept=".xml">
     <script type="text/javascript">
         document.querySelector("#uploadFile").addEventListener("change", function () {
-            const filename = this.files[0].name.split(".")[0];
+            const fileName = this.files[0].name.split(".")[0];
 
             const reader = new FileReader();
             reader.onload = function () {
@@ -29,14 +29,19 @@
                     row.push("\"" + sp[i].textContent.replace(/(")/g, "\"$1") + "\"");
                     content.push(row.join(","));
                 }
+                content = content.join("\n");
 
                 const downloadCSV = document.createElement("a");
-                const url = URL.createObjectURL(new Blob(["\uFEFF" + content.join("\n")], { type: "text/csv; charset=UTF-8" }));
-                downloadCSV.href = url;
-                downloadCSV.setAttribute("download", filename);
-                downloadCSV.click();
-                downloadCSV.remove();
-                URL.revokeObjectURL(url);
+                if (URL && "download" in downloadCSV) {
+                    const url = URL.createObjectURL(new Blob(["\uFEFF"], { type: "text/csv;charset=UTF-8" }));
+                    downloadCSV.href = url;
+                    downloadCSV.setAttribute("download", fileName);
+                    downloadCSV.click();
+                    downloadCSV.remove();
+                    URL.revokeObjectURL(url);
+                } else {
+                    location.href = "data:text/csv;charset=UTF-8,\uFEFF" + content;
+                }
             };
             reader.readAsText(this.files[0], "UTF-8");
 
