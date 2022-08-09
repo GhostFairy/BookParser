@@ -18,12 +18,14 @@
 
         #BookParser_wrapper {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
+            grid-template-columns: 1fr 8fr 1fr;
+            grid-template-rows: 1fr 8fr 1fr;
             align-items: center;
             text-align: center;
-            height: 100vh;
-            margin: 0 auto;
+            height: calc(100vh - 60px);
+            margin: 30px;
+            border: 0.5em dashed dimgray;
+            border-radius: 1em;
         }
 
         #BookParser_center {
@@ -34,8 +36,8 @@
         #BookParser_center p {
             display: inline-block;
             margin: 10px;
-            font-size: 20px;
             color: white;
+            font-size: 30px;
         }
 
         #BookParser_info_dnd {
@@ -45,17 +47,17 @@
         #BookParser_uploadFile {
             display: inline-block;
             position: relative;
-            width: 120px;
-            height: 40px;
-            line-height: 36px;
+            width: 200px;
+            height: 60px;
+            line-height: calc(60px - 0.5em);
             margin: 10px;
             background-color: dimgray;
-            border: 2px solid darkgray;
+            border: 0.25em solid darkgray;
             border-radius: 0.25em;
         }
 
         #BookParser_uploadFile:hover {
-            border: 2px solid white;
+            border: 0.25em solid white;
         }
 
         #BookParser_inputFile {
@@ -69,7 +71,7 @@
 
         #BookParser_inputFile_text {
             color: white;
-            font-size: 20px;
+            font-size: 30px;
             font-weight: bold;
         }
     </style>
@@ -119,6 +121,67 @@
             reader.readAsText(this.files[0], "UTF-8");
 
             this.value = null;
+        });
+
+
+        var dragCounter = 0;
+
+        document.querySelector("#BookParser_wrapper").addEventListener("dragover", function (e) {
+            e.preventDefault();
+        });
+
+        document.querySelector("#BookParser_wrapper").addEventListener("dragenter", function (e) {
+            e.preventDefault();
+            dragCounter++;
+        });
+
+        document.querySelector("#BookParser_wrapper").addEventListener("dragleave", function (e) {
+            e.preventDefault();
+            dragCounter--;
+        });
+
+        document.querySelectorAll("#BookParser_wrapper *").forEach(function () {
+            this.addEventListener("dragenter", function (e) {
+                e.preventDefault();
+                dragCounter++;
+                if (dragCounter > 0) {
+                    document.querySelector("#BookParser_wrapper").style.borderColor = "white";
+                }
+            });
+            this.addEventListener("dragleave", function (e) {
+                e.preventDefault();
+                dragCounter--;
+                if (dragCounter <= 0) {
+                    document.querySelector("#BookParser_wrapper").style.borderColor = "dimgray";
+                }
+            });
+        })
+
+        document.querySelector("#BookParser_wrapper").addEventListener("drop", function (e) {
+            e.preventDefault();
+            dragCounter = 0;
+            this.style.borderColor = "dimgray";
+
+            let fileList = new DataTransfer();
+            for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                if (isValidated(e.dataTransfer.files[i])) {
+                    fileList.items.add(e.dataTransfer.files[i]);
+                }
+            }
+
+            if (fileList.items.length > 0) {
+                console.log(fileList);
+                document.querySelector("#BookParser_inputFile").files = fileList.files;
+                document.querySelector("#BookParser_inputFile").dispatchEvent(new Event("change"));
+            }
+
+            function isValidated(file) {
+                if (file.type.indexOf("text/xml") < 0) {
+                    return false;
+                }
+
+                return true;
+            }
         });
     </script>
 </body>
