@@ -7,7 +7,7 @@
     <title>BookParser</title>
     <style type="text/css">
         :root {
-            --custom-height: 100vh;
+            --custom-height: 1vh;
         }
 
         * {
@@ -26,7 +26,7 @@
             grid-template-rows: 1fr 8fr 1fr;
             align-items: center;
             text-align: center;
-            height: calc(var(--custom-height) - 60px);
+            height: calc((var(--custom-height) * 100) - 60px);
             margin: 30px;
             border: 0.5em dashed dimgray;
             border-radius: 1em;
@@ -94,7 +94,7 @@
     </div>
     <script type="text/javascript">
         function customHeight() {
-            document.documentElement.style.setProperty("--custom-height", window.innerHeight + "px");
+            document.documentElement.style.setProperty("--custom-height", (window.innerHeight * 0.01) + "px");
         }
         customHeight();
         window.addEventListener("resize", customHeight);
