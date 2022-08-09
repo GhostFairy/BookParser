@@ -93,106 +93,120 @@
         </div>
     </div>
     <script type="text/javascript">
+        init();
+
+        function init() {
+            customHeight();
+            eventHandler();
+        }
+
         function customHeight() {
             document.documentElement.style.setProperty("--custom-height", (window.innerHeight * 0.01) + "px");
         }
-        customHeight();
-        window.addEventListener("resize", customHeight);
 
-        document.querySelector("#BookParser_inputFile").addEventListener("change", function () {
-            const fileName = this.files[0].name.split(".")[0];
+        function eventHandler() {
+            // 창 크기 조절시 세로 크기 재설정
+            window.addEventListener("resize", customHeight);
 
-            const reader = new FileReader();
-            reader.onload = function () {
-                let sp = new DOMParser().parseFromString(this.result, "text/xml").querySelectorAll("sp");
-                let content = [];
+            // 파일 등록시 변환 시작
+            document.querySelector("#BookParser_inputFile").addEventListener("change", function () {
+                const fileName = this.files[0].name.split(".")[0];
 
-                let column = ["", "speaker", "addressee", "verb", "location", "sp"];
-                content.push(column.join(","));
+                const reader = new FileReader();
+                reader.onload = function () {
+                    let sp = new DOMParser().parseFromString(this.result, "text/xml").querySelectorAll("sp");
+                    let content = [];
 
-                for (let i = 0; i < sp.length; i++) {
-                    let row = [i + 1];
-                    for (let j = 1; j < column.length - 1; j++) {
-                        row.push(sp[i].getAttribute(column[j]));
+                    let column = ["", "speaker", "addressee", "verb", "location", "sp"];
+                    content.push(column.join(","));
+
+                    for (let i = 0; i < sp.length; i++) {
+                        let row = [i + 1];
+                        for (let j = 1; j < column.length - 1; j++) {
+                            row.push(sp[i].getAttribute(column[j]));
+                        }
+                        row.push("\"" + sp[i].textContent.replace(/(")/g, "\"$1") + "\"");
+                        content.push(row.join(","));
                     }
-                    row.push("\"" + sp[i].textContent.replace(/(")/g, "\"$1") + "\"");
-                    content.push(row.join(","));
-                }
-                content = content.join("\n");
+                    content = content.join("\n");
 
-                const downloadCSV = document.createElement("a");
-                const url = URL.createObjectURL(new Blob(["\uFEFF", content], { type: "text/csv;charset=UTF-8;" }));
-                downloadCSV.href = url;
-                downloadCSV.setAttribute("download", fileName);
-                downloadCSV.click();
-                downloadCSV.remove();
-                URL.revokeObjectURL(url);
-            };
-            reader.readAsText(this.files[0], "UTF-8");
+                    const downloadCSV = document.createElement("a");
+                    const url = URL.createObjectURL(new Blob(["\uFEFF", content], { type: "text/csv;charset=UTF-8;" }));
+                    downloadCSV.href = url;
+                    downloadCSV.setAttribute("download", fileName);
+                    downloadCSV.click();
+                    downloadCSV.remove();
+                    URL.revokeObjectURL(url);
+                };
+                reader.readAsText(this.files[0], "UTF-8");
 
-            this.value = null;
-        });
+                this.value = null;
+            });
 
+            var dragCounter = 0;
 
-        var dragCounter = 0;
+            // 드래그 앤 드롭으로 파일 열기 비활성화
+            document.querySelector("#BookParser_wrapper").addEventListener("dragover", function (e) {
+                e.preventDefault();
+            });
 
-        document.querySelector("#BookParser_wrapper").addEventListener("dragover", function (e) {
-            e.preventDefault();
-        });
-
-        document.querySelector("#BookParser_wrapper").addEventListener("dragenter", function (e) {
-            e.preventDefault();
-            dragCounter++;
-        });
-
-        document.querySelector("#BookParser_wrapper").addEventListener("dragleave", function (e) {
-            e.preventDefault();
-            dragCounter--;
-        });
-
-        document.querySelectorAll("#BookParser_wrapper *").forEach(function () {
-            this.addEventListener("dragenter", function (e) {
+            document.querySelector("#BookParser_wrapper").addEventListener("dragenter", function (e) {
                 e.preventDefault();
                 dragCounter++;
-                if (dragCounter > 0) {
-                    document.querySelector("#BookParser_wrapper").style.borderColor = "white";
-                }
             });
-            this.addEventListener("dragleave", function (e) {
+
+            document.querySelector("#BookParser_wrapper").addEventListener("dragleave", function (e) {
                 e.preventDefault();
                 dragCounter--;
-                if (dragCounter <= 0) {
-                    document.querySelector("#BookParser_wrapper").style.borderColor = "dimgray";
+            });
+
+            document.querySelectorAll("#BookParser_wrapper *").forEach(function () {
+                this.addEventListener("dragenter", function (e) {
+                    e.preventDefault();
+                    dragCounter++;
+                    if (dragCounter > 0) {
+                        document.querySelector("#BookParser_wrapper").style.borderColor = "white";
+                    }
+                });
+                this.addEventListener("dragleave", function (e) {
+                    e.preventDefault();
+                    dragCounter--;
+                    if (dragCounter <= 0) {
+                        document.querySelector("#BookParser_wrapper").style.borderColor = "dimgray";
+                    }
+                });
+            })
+
+            // 드래그 앤 드롭으로 파일 등록
+            document.querySelector("#BookParser_wrapper").addEventListener("drop", function (e) {
+                e.preventDefault();
+                dragCounter = 0;
+                this.style.borderColor = "dimgray";
+
+                let fileList = new DataTransfer();
+                for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                    if (isValidated(e.dataTransfer.files[i])) {
+                        fileList.items.add(e.dataTransfer.files[i]);
+                    }
+                }
+
+                if (fileList.items.length > 0) {
+                    console.log(fileList);
+                    document.querySelector("#BookParser_inputFile").files = fileList.files;
+                    document.querySelector("#BookParser_inputFile").dispatchEvent(new Event("change"));
+                }
+
+                function isValidated(file) {
+                    if (file.type.indexOf("text/xml") < 0) {
+                        return false;
+                    }
+
+                    return true;
                 }
             });
-        })
+        }
 
-        document.querySelector("#BookParser_wrapper").addEventListener("drop", function (e) {
-            e.preventDefault();
-            dragCounter = 0;
-            this.style.borderColor = "dimgray";
 
-            let fileList = new DataTransfer();
-            for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                if (isValidated(e.dataTransfer.files[i])) {
-                    fileList.items.add(e.dataTransfer.files[i]);
-                }
-            }
-
-            if (fileList.items.length > 0) {
-                console.log(fileList);
-                document.querySelector("#BookParser_inputFile").files = fileList.files;
-                document.querySelector("#BookParser_inputFile").dispatchEvent(new Event("change"));
-            }
-
-            function isValidated(file) {
-                if (file.type.indexOf("text/xml") < 0) {
-                    return false;
-                }
-
-                return true;
-            }
-        });
     </script>
 </body>
 
