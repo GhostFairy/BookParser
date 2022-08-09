@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BookParser</title>
     <style type="text/css">
+        :root {
+            --custom-height: 100vh;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -22,7 +26,7 @@
             grid-template-rows: 1fr 8fr 1fr;
             align-items: center;
             text-align: center;
-            height: calc(100vh - 60px);
+            height: calc(var(--custom-height) - 60px);
             margin: 30px;
             border: 0.5em dashed dimgray;
             border-radius: 1em;
@@ -89,6 +93,12 @@
         </div>
     </div>
     <script type="text/javascript">
+        function customHeight() {
+            document.documentElement.style.setProperty("--custom-height", window.innerHeight + "px");
+        }
+        customHeight();
+        window.addEventListener("resize", customHeight);
+
         document.querySelector("#BookParser_inputFile").addEventListener("change", function () {
             const fileName = this.files[0].name.split(".")[0];
 
